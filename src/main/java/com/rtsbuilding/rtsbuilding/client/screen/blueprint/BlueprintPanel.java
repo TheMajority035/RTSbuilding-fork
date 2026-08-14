@@ -14,6 +14,8 @@ import com.rtsbuilding.rtsbuilding.uikit.theme.BlueprintLibraryStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -381,7 +383,27 @@ public final class BlueprintPanel {
         openRenameDialog(entry);
         return true;
     }
-    static boolean deleteLibraryEntry(String fileName) { return LIBRARY.delete(fileName); }
+    static boolean deleteLibraryEntry(String fileName) {
+        BlueprintEntry entry = LIBRARY.entryByFileName(fileName);
+        Minecraft minecraft = Minecraft.getInstance();
+        Screen parent = minecraft.screen;
+        if (entry == null || parent == null) return false;
+        minecraft.setScreen(new ConfirmScreen(confirmed -> {
+            if (confirmed) {
+                // 确认发生时按稳定文件名重新查询，避免弹窗期间列表变化后删除旧对象。
+                LIBRARY.delete(fileName);
+            } else {
+                setStatus(S2CBlueprintStatusPayload.INFO,
+                        "screen.rtsbuilding.blueprints.status.delete_cancelled", "");
+            }
+            minecraft.setScreen(parent);
+        },
+                Component.translatable(
+                        "screen.rtsbuilding.blueprints.delete_confirm_title"),
+                Component.translatable(
+                        "screen.rtsbuilding.blueprints.delete_confirm_message", entry.name())));
+        return true;
+    }
 
     static Component statusText() { return statusText; }
     static int statusColor() { return statusColor; }
