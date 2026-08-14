@@ -1,13 +1,11 @@
 package com.rtsbuilding.rtsbuilding.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.rtsbuilding.rtsbuilding.client.compat.RtsVanillaCursorHitBridge;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
  * 让机械动力“创造模式世界塑形器”的方块簇预览跟随 RTS 自由光标。
@@ -20,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
         targets = "com.simibubi.create.content.equipment.zapper.terrainzapper.WorldshaperRenderHandler",
         remap = false)
 public final class CreateWorldshaperRenderHandlerMixin {
-    @Redirect(
+    @ModifyExpressionValue(
             method = "createBrushOutline",
             at = @At(
                     value = "INVOKE",
@@ -28,8 +26,8 @@ public final class CreateWorldshaperRenderHandlerMixin {
                     remap = false),
             require = 0,
             remap = false)
-    private static BlockHitResult rtsbuilding$useRtsCursor(Level level, ClipContext context) {
+    private static BlockHitResult rtsbuilding$useRtsCursor(BlockHitResult original) {
         BlockHitResult hit = RtsVanillaCursorHitBridge.currentRtsBlockHit();
-        return hit != null ? hit : level.clip(context);
+        return hit != null ? hit : original;
     }
 }

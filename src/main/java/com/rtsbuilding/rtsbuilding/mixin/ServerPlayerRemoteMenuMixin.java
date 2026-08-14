@@ -1,12 +1,10 @@
 package com.rtsbuilding.rtsbuilding.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.rtsbuilding.rtsbuilding.compat.remote.RtsRemoteMenuCompat;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -18,17 +16,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(ServerPlayer.class)
 abstract class ServerPlayerRemoteMenuMixin {
-    @Redirect(
+    @ModifyExpressionValue(
             method = "tick",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/inventory/AbstractContainerMenu;stillValid(Lnet/minecraft/world/entity/player/Player;)Z"))
-    private boolean rtsbuilding$keepTrackedRemoteMenuOpen(
-            AbstractContainerMenu menu, Player player) {
-        if (RtsRemoteMenuCompat.shouldKeepServerRemoteMenuOpen(menu, player)) {
-            return true;
-        }
-        return menu.stillValid(player);
+                    target = "Lnet/minecraft/world/inventory/AbstractContainerMenu;stillValid(Lnet/minecraft/world/entity/player/Player;)Z"),
+            require = 0)
+    private boolean rtsbuilding$keepTrackedRemoteMenuOpen(boolean original) {
+        ServerPlayer player = (ServerPlayer) (Object) this;
+        return original || RtsRemoteMenuCompat.shouldKeepServerRemoteMenuOpen(player.containerMenu, player);
     }
 
     /**
