@@ -214,10 +214,12 @@ public final class BottomPanel {
         if (this.controller.hasSelectedFluid()) {
             return screen.text("screen.rtsbuilding.status.selected_fluid", this.controller.getSelectedFluidLabel());
         }
-        if (!this.controller.getSelectedItemLabel().isEmpty()) {
-            return screen.text("screen.rtsbuilding.status.selected_item", screen.selectedItemStatusLabel());
+        String selectedItemStatus = screen.selectedItemStatusLabel();
+        if (!selectedItemStatus.isEmpty()) {
+            return screen.text("screen.rtsbuilding.status.selected_item", selectedItemStatus);
         }
-        if (this.controller.isEmptyHandSelected()) {
+        if (this.controller.isEmptyHandSelected()
+                || (screen.getMinecraft() != null && screen.getMinecraft().player != null)) {
             return screen.text("screen.rtsbuilding.status.selected_empty_hand");
         }
         return screen.text("screen.rtsbuilding.status.selected_none");

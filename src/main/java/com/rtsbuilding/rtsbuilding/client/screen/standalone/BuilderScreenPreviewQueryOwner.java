@@ -210,9 +210,26 @@ final class BuilderScreenPreviewQueryOwner {
         }
 
     String selectedItemStatusLabel() {
-            ItemStack preview = screen.controller.getSelectedItemPreview();
-            String label = screen.controller.getSelectedItemLabel();
-            if (preview != null && !preview.isEmpty() && preview.isDamageableItem()) {
+            return formatSelectedItemStatusLabel(resolvePlacementItemPreview());
+        }
+
+    static ItemStack resolvePlacementItemPreview(ItemStack selectedPreview, boolean hasSelectedItem,
+                                                   boolean emptyHandSelected, ItemStack mainHand) {
+            if (hasSelectedItem) {
+                return selectedPreview == null ? ItemStack.EMPTY : selectedPreview;
+            }
+            if (emptyHandSelected) {
+                return ItemStack.EMPTY;
+            }
+            return mainHand == null ? ItemStack.EMPTY : mainHand;
+        }
+
+    static String formatSelectedItemStatusLabel(ItemStack preview) {
+            if (preview == null || preview.isEmpty()) {
+                return "";
+            }
+            String label = preview.getHoverName().getString();
+            if (preview.isDamageableItem()) {
                 int max = preview.getMaxDamage();
                 int durability = Math.max(0, max - preview.getDamageValue());
                 return label + " " + durability + "/" + max;
@@ -220,21 +237,25 @@ final class BuilderScreenPreviewQueryOwner {
             return label;
         }
 
+    private ItemStack resolvePlacementItemPreview() {
+            boolean hasSelectedItem = screen.controller.hasSelectedItem();
+            boolean emptyHandSelected = screen.controller.isEmptyHandSelected();
+            ItemStack mainHand = ItemStack.EMPTY;
+            if (!hasSelectedItem && !emptyHandSelected
+                    && screen.getMinecraft() != null
+                    && screen.getMinecraft().player != null) {
+                mainHand = screen.getMinecraft().player.getMainHandItem();
+            }
+            return resolvePlacementItemPreview(
+                    screen.controller.getSelectedItemPreview(), hasSelectedItem, emptyHandSelected, mainHand);
+        }
+
     ItemStack resolveCursorPreview() {
-            if (screen.controller.hasSelectedItem()) {
-                return screen.controller.getSelectedItemPreview();
+            if (!screen.controller.hasSelectedItem() && screen.controller.hasSelectedFluid()) {
+                ItemStack fluid = screen.controller.getSelectedFluidPreview();
+                return fluid == null ? ItemStack.EMPTY : fluid;
             }
-            if (screen.controller.hasSelectedFluid()) {
-                return screen.controller.getSelectedFluidPreview();
-            }
-            if (screen.controller.isEmptyHandSelected()) {
-                return ItemStack.EMPTY;
-            }
-            if (screen.getMinecraft() == null || screen.getMinecraft().player == null) {
-                return ItemStack.EMPTY;
-            }
-            ItemStack hand = screen.getMinecraft().player.getMainHandItem();
-            return hand.isEmpty() ? ItemStack.EMPTY : hand;
+            return resolvePlacementItemPreview();
         }
 
     boolean shouldRenderFunnelCursor() {
