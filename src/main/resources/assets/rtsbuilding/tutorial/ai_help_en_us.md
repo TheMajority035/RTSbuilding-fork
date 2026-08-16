@@ -334,6 +334,8 @@ Bounded structured files live at `logs/rtsbuilding/diagnostics-client.jsonl` and
 
 `diagnostics.level` defaults to `BASIC`, which records bounded lifecycle events and percentage progress checkpoints. `VERBOSE` also permits one task-progress sample per second; `OFF` disables these diagnostics. Common rejection reasons include `FEATURE_LOCKED`, `HARVEST_TIER_TOO_LOW`, `TOOL_CANNOT_HARVEST`, `OUTSIDE_SESSION_RANGE`, and `CLAIM_DENIED`. Supply both client and server logs for the reproduction window. CPU attribution still requires Spark, JFR, or another profiler.
 
+RTS camera ownership uses a separate `[RTS Camera Diagnostics]` prefix for sustained camera-entity ownership loss, rate-limited reminders, and one stable recovery summary. It logs only after consecutive abnormal observations and captures at most one external caller source per RTS session. It never cancels third-party camera calls, replaces their target, or changes RTS camera behavior. For view flicker investigations, an ordinary `latest.log` is sufficient; frame-by-frame logging is not required.
+
 ## Stable responsibility chains
 
 ### Remote interaction
@@ -350,7 +352,9 @@ The server validates session, dimension, action range, progression/plugins, clai
 
 Targets pass soft-block classification, plugin harvest tier, real-tool suitability, tool protection, range, claim, and recovery rules. Chain requests obey target-count and per-tick limits; area requests additionally obey per-axis and total-volume limits.
 
-Each chain/area request has independent progress and task identity. Overlap must tolerate a target already becoming air without duplicating drops. “Recover RTS-placed blocks” uses a dedicated recorded-block path that bypasses tool, tier, and Silk Touch requirements.
+Each chain/area request has independent progress and task identity. Overlap must tolerate a target already becoming air without duplicating drops. With “Recover RTS-placed blocks” enabled, a valid credential created by the same player's RTS or ordinary placement event enters instant recovery before the ordinary mining workflow and tool lease. Credentials match the owner, actual block registry ID, and placement generation. Another player, a replaced block, or an untracked target continues through ordinary mining without consuming stale tracking.
+
+Instant recovery temporarily uses an internal Silk Touch tool only for the current player, dimension, and exact target, then invokes the vanilla player-break entry once. Final drops still pass through NeoForge and third-party drop events. With auto-store enabled they try linked storage, then player inventory, while any remainder follows the vanilla world-drop path; linked storage is not required. Cancellation, claim denial, exceptions, or an unchanged world state retain the credential, and tracker/link cleanup commits only after the block actually changes.
 
 Area destruction freezes the selected tool slot when the task is submitted. A real tool leased from linked storage takes priority; without a lease, execution reads the task's frozen hotbar slot rather than mutable or stale session state. Harvest checks, tool protection, and durability write-back all use that same real stack.
 
@@ -359,6 +363,8 @@ Drops follow normal break logic, then optionally transfer to linked storage. A f
 ### Undo and redo history
 
 Ctrl+Z uses server-authoritative history and executes with the creative/survival mode frozen when the original operation occurred; changing game mode before undo cannot change its resource or NBT rules. Each player keeps only the latest three complete placement or destruction operations. If one operation exceeds the block-count or compressed-NBT limit, the whole history entry is rejected with player feedback instead of retaining an incomplete snapshot.
+
+Placement and destruction history also stores the recovery credential before and after each operation. Undo/redo restores it only after a successful world write and only while the expected generation still matches, so an older history entry cannot remove or reclaim a newer same-block placement at the same coordinate.
 
 Creative history stores complete before/after BlockState and block-entity NBT snapshots. Ctrl+Z restores the pre-operation snapshot, while Ctrl+Y redoes only a successfully undone creative operation; any new world modification clears the old redo branch. Survival placement undo removes successfully placed blocks and refunds material to linked storage or player inventory. Survival destruction undo stores only positions and BlockStates, never block-entity NBT, and pays for restored blocks from linked storage, the recorded hotbar slot, or an explicit fallback source. Partial success must trim history by exact positions rather than treating an unprocessed list prefix as completed.
 
@@ -437,7 +443,7 @@ All settings below apply immediately and need no restart. Most live in the clien
 | Auto-store mined drops | On | Server session flag; mined drops first try linked storage. |
 | Quiet refresh | Off | Prevents storage changes from turning the manual refresh button green; does not disable refresh. |
 | Auto-refresh every 30 seconds | On | When storage changed, requests at most one automatic page refresh per 30 seconds. |
-| Recover RTS-placed blocks | Off | Recorded RTS placements bypass tool, tier, and Silk Touch checks when recovered. |
+| Recover RTS-placed blocks | Off | Uses vanilla-event-compatible instant Silk Touch recovery for blocks with a valid credential owned by the current player; linked storage is optional and drops fall back through inventory to the world. |
 | Tool protection | On | Batch mining stops around 5% remaining durability. |
 | Auto-exit RTS at half health | On | Returns to ordinary view after damage leaves health at or below half. |
 | Beyond Dimensions network | On | Includes an available Beyond Dimensions main network in the storage session. |
