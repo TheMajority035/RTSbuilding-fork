@@ -340,6 +340,8 @@ Bounded structured files live at `logs/rtsbuilding/diagnostics-client.jsonl` and
 
 The client ray selects a block, face, or entity. The server recreates a bounded remote interaction context and invokes normal block/item interaction behavior. Claim protection, session dimension, and range still apply. Shift-natural interaction and ordinary RTS interaction are distinct intents; troubleshooting should record the actual input used.
 
+Remote-menu validity and Create Worldshaper preview hooks use optional, composable expression modification and preserve results already produced by other mods. When Connector or another mod transforms the same call site, inspect the Mixin audit first; a missing optional compatibility target must skip safely instead of preventing startup.
+
 ### Placement and batch building
 
 The server validates session, dimension, action range, progression/plugins, claims, and placement legality, then obtains the real `ItemStack` from inventory or linked storage. Capability, NBT, durability, and energy mutations must remain on the real extracted stack. Large shapes become task slices. Only confirmed changes trigger placement animation and material/storage refresh.
@@ -363,6 +365,8 @@ Creative history stores complete before/after BlockState and block-entity NBT sn
 ### Blueprints
 
 The client owns the local library, parsing UI, capture selection, naming, rotation, anchor, material preview, and ghost. The server revalidates format, non-air count, missing blocks, plugin, range, materials, claims, and placement legality. Large jobs use durable workflows and the Task Engine; large blueprint data is persisted separately from lightweight task metadata.
+
+Before importing or exporting a blueprint or theme, the client confirms that TinyFD has a graphical file-dialog backend. Android/FCL and headless Linux environments must show an in-game unavailable status instead of falling back to console input that blocks the game thread. Blueprint deletion uses the vanilla confirmation screen and resolves the stable file name again when confirmed.
 
 Directional/connected blocks and block entities need transform and sanitization. Distortion should be reduced to a minimal blueprint and checked across block-state rotation, block-entity NBT transformation, and neighbor updates.
 
