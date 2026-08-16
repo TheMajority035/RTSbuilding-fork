@@ -12,7 +12,8 @@
     "SodiumLevelSliceMixin",
     "RenderChunkRegionMixin",
     "SimulatedHoneyGlueClientHandlerMixin",
-    "LocalPlayerMixin"
+    "LocalPlayerMixin",
+    "MinecraftCameraEntityMixin"
   ],
   "mixins": [
     "ChestMenuMixin",

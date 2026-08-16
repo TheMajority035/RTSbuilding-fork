@@ -1,5 +1,6 @@
 package com.rtsbuilding.rtsbuilding.client.service;
 
+import com.rtsbuilding.rtsbuilding.client.diagnostic.RtsCameraOwnershipDiagnostics;
 import com.rtsbuilding.rtsbuilding.client.network.RtsClientPacketGateway;
 import com.rtsbuilding.rtsbuilding.common.RtsEntities;
 import com.rtsbuilding.rtsbuilding.common.entity.RtsCameraEntity;
@@ -654,6 +655,7 @@ public final class CameraOrbitService {
         }
 
         snapVisualMirrorCameraPose();
+        RtsCameraOwnershipDiagnostics.observeFrame(minecraft, this.localMirrorCamera, minecraft.getCameraEntity());
 
         if (minecraft.getCameraEntity() != this.localMirrorCamera) {
             if (this.cameraRestoreCooldownTicks <= 0) {
