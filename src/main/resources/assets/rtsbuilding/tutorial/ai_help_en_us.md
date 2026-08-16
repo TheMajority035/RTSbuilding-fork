@@ -561,7 +561,7 @@ When information is incomplete, offer safe reversible checks first, then ask for
 
 ## Version-specific technical appendix: NeoForge 1.21.1
 
-This appendix defines the task, workflow, and logging boundaries for this line. The release-preparation version is `1.1.7-beta1`; if the test build is unstable in a modpack, return to the latest release `1.1.6-patch2` and do not leave old test tasks running in the world.
+This appendix defines the task, workflow, and logging boundaries for this line. The release-preparation version is `1.1.7`, while the platform channel remains Beta; if the test build is unstable in a modpack, return to the latest release `1.1.6-patch2` and do not leave old test tasks running in the world.
 
 ### Task-cancellation contract
 
