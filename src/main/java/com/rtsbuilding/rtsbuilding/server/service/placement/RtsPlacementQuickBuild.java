@@ -207,7 +207,7 @@ public final class RtsPlacementQuickBuild {
             BlockPlacer.applyQuickBuildBlockEntity(level, targetPos, placementStack, placedState, player);
         }
         // 完全改为使用储存空间的方块进行放置，不再从主手扣除
-        BlockPlacer.trackPlaced(level, targetPos);
+        BlockPlacer.trackPlaced(level, targetPos, player);
         RtsPlacementSound.playRemotePlacedBlockAnimation(player, targetPos);
         RtsPlacementSound.playRemotePlacedBlockSound(player, level, targetPos);
         ServiceRegistry.getInstance().page().recordRecentItem(session, plan.itemId(), S2CRtsStoragePagePayload.RECENT_ITEM_PLACED, 1L);

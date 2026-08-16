@@ -5,6 +5,7 @@ import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -46,10 +47,11 @@ public final class BlockPlacer {
     }
 
     /**
-     * 标记已放置方块到追踪器。
+     * 在放置回调和方块实体初始化完成后，按世界最终状态写入真实 owner/Block ID。
      */
-    public static void trackPlaced(ServerLevel level, BlockPos pos) {
-        PlacedBlockTrackerData.get(level).mark(pos);
+    public static void trackPlaced(ServerLevel level, BlockPos pos, ServerPlayer owner) {
+        if (level == null || pos == null || owner == null) return;
+        PlacedBlockTrackerData.get(level).markPlaced(pos, owner.getUUID(), level.getBlockState(pos));
     }
 
     /**

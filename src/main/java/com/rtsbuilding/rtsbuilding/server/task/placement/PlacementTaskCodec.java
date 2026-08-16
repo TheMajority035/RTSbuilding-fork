@@ -1,5 +1,6 @@
 package com.rtsbuilding.rtsbuilding.server.task.placement;
 
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.task.PlacementTaskPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -105,6 +106,8 @@ public final class PlacementTaskCodec {
                         || !record.contains("after", Tag.TAG_COMPOUND)) {
                     throw new IllegalArgumentException("placement history record 不完整");
                 }
+                validateCredential(record, "credentialBefore");
+                validateCredential(record, "credentialAfter");
                 decodedHistory.add(record.copy());
             }
             history = List.copyOf(decodedHistory);
@@ -124,5 +127,13 @@ public final class PlacementTaskCodec {
         if (targets != totalUnits || targets > MAX_TARGETS) {
             throw new IllegalArgumentException("placement definition 目标数量与 total 不一致或越界");
         }
+    }
+
+    private static void validateCredential(CompoundTag record, String key) {
+        if (!record.contains(key)) return;
+        if (!record.contains(key, Tag.TAG_COMPOUND)) {
+            throw new IllegalArgumentException("placement history " + key + " 类型无效");
+        }
+        PlacedBlockTrackerData.decodeSnapshot(record.getCompound(key));
     }
 }

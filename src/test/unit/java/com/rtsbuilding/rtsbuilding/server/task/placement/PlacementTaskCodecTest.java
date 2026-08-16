@@ -1,5 +1,6 @@
 package com.rtsbuilding.rtsbuilding.server.task.placement;
 
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.task.PlacementTaskPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PlacementTaskCodecTest {
@@ -41,6 +43,9 @@ class PlacementTaskCodecTest {
         assertEquals(PlacementResumePolicy.OVERWRITE_CONFLICTS, decoded.state().resumePolicy());
         assertEquals(true, decoded.state().creativeOperation());
         assertEquals(history, decoded.state().historyRecords().getFirst());
+        assertEquals(PlacedBlockTrackerData.CredentialKind.V2,
+                PlacedBlockTrackerData.decodeSnapshot(
+                        history.getCompound("credentialAfter")).kind());
     }
 
     @Test
@@ -72,6 +77,24 @@ class PlacementTaskCodecTest {
                 definition(), 3, 1, 0, 0, 0, List.of());
         assertThrows(IllegalArgumentException.class,
                 () -> new PlacementTaskPayload(UUID.randomUUID(), dimension, 4, state));
+    }
+
+    @Test
+    void legacyHistoryWithoutCredentialFieldsStillDecodes() {
+        ResourceKey<Level> dimension = ResourceKey.create(
+                Registries.DIMENSION, ResourceLocation.parse("minecraft:overworld"));
+        CompoundTag history = placementHistory(new BlockPos(1, 2, 3));
+        history.remove("credentialBefore");
+        history.remove("credentialAfter");
+        PlacementTaskState state = new PlacementTaskState(
+                definition(), 12, 1, 1, 1, 0, List.of(new BlockPos(1, 2, 3)),
+                PlacementResumePolicy.OVERWRITE_CONFLICTS, true, List.of(history));
+
+        PlacementTaskPayload decoded = PlacementTaskCodec.decode(PlacementTaskCodec.encode(
+                new PlacementTaskPayload(UUID.randomUUID(), dimension, 12, state)));
+
+        assertFalse(decoded.state().historyRecords().getFirst().contains("credentialBefore"));
+        assertFalse(decoded.state().historyRecords().getFirst().contains("credentialAfter"));
     }
 
     private static CompoundTag validTag() {
@@ -110,6 +133,13 @@ class PlacementTaskCodecTest {
         CompoundTag blockEntity = new CompoundTag();
         blockEntity.putString("id", "minecraft:chest");
         history.put("blockEntity", blockEntity);
+        history.put("credentialBefore", PlacedBlockTrackerData.encodeSnapshot(
+                PlacedBlockTrackerData.CredentialSnapshot.legacy(null, 3L)));
+        history.put("credentialAfter", PlacedBlockTrackerData.encodeSnapshot(
+                new PlacedBlockTrackerData.CredentialSnapshot(
+                        UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                        ResourceLocation.parse("minecraft:stone"), 4L,
+                        PlacedBlockTrackerData.CredentialKind.V2)));
         return history;
     }
 }

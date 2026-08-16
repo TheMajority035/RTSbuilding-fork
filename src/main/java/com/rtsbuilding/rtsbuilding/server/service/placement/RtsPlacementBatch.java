@@ -5,6 +5,7 @@ import com.rtsbuilding.rtsbuilding.common.placement.PlacementStatePreset;
 import com.rtsbuilding.rtsbuilding.network.builder.C2SRtsPlaceBatchPayload;
 import com.rtsbuilding.rtsbuilding.server.history.ServerHistoryManager;
 import com.rtsbuilding.rtsbuilding.server.history.HistoryBlockRecord;
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.protection.RtsClaimProtectionService;
 import com.rtsbuilding.rtsbuilding.server.progression.RtsFeature;
 import com.rtsbuilding.rtsbuilding.server.progression.RtsProgressionManager;
@@ -431,14 +432,20 @@ public final class RtsPlacementBatch {
         CompoundTag afterBlockEntity = creativeOperation
                 ? ServerHistoryManager.captureBlockEntityData(player.serverLevel(), actualPos)
                 : null;
+        PlacedBlockTrackerData.CredentialSnapshot afterCredential =
+                PlacedBlockTrackerData.get(player.serverLevel()).captureSnapshot(actualPos);
+        PlacedBlockTrackerData.CredentialSnapshot beforeCredential = beforePlacement != null
+                && beforePlacement.pos().equals(actualPos)
+                ? beforePlacement.credentialBefore() : null;
         if (creativeOperation && beforePlacement != null
                 && beforePlacement.pos().equals(actualPos)) {
             return HistoryBlockRecord.placement(
                     actualPos, beforePlacement.state(), beforePlacement.blockEntityData(),
-                    after, afterBlockEntity);
+                    after, afterBlockEntity, beforePlacement.credentialBefore(), afterCredential);
         }
         return HistoryBlockRecord.placement(
-                actualPos, Blocks.AIR.defaultBlockState(), null, after, afterBlockEntity);
+                actualPos, Blocks.AIR.defaultBlockState(), null, after, afterBlockEntity,
+                beforeCredential, afterCredential);
     }
 
     private static CompoundTag encodePlacementHistory(HistoryBlockRecord record) {
@@ -452,6 +459,12 @@ public final class RtsPlacementBatch {
         if (record.afterBlockEntityData() != null) {
             tag.put("afterBlockEntity", record.afterBlockEntityData().copy());
         }
+        if (record.credentialBefore() != null) {
+            tag.put("credentialBefore", PlacedBlockTrackerData.encodeSnapshot(record.credentialBefore()));
+        }
+        if (record.credentialAfter() != null) {
+            tag.put("credentialAfter", PlacedBlockTrackerData.encodeSnapshot(record.credentialAfter()));
+        }
         return tag;
     }
 
@@ -464,8 +477,23 @@ public final class RtsPlacementBatch {
                 ? tag.getCompound("blockEntity").copy() : null;
         CompoundTag afterBlockEntity = tag.contains("afterBlockEntity", Tag.TAG_COMPOUND)
                 ? tag.getCompound("afterBlockEntity").copy() : null;
+        PlacedBlockTrackerData.CredentialSnapshot credentialBefore = decodeCredential(
+                tag, "credentialBefore");
+        PlacedBlockTrackerData.CredentialSnapshot credentialAfter = decodeCredential(
+                tag, "credentialAfter");
         return HistoryBlockRecord.placement(
-                BlockPos.of(tag.getLong("pos")), before, blockEntity, after, afterBlockEntity);
+                BlockPos.of(tag.getLong("pos")), before, blockEntity, after, afterBlockEntity,
+                credentialBefore, credentialAfter);
+    }
+
+    /** 旧 placement 历史可缺字段，但损坏的凭据字段不能静默退化为 ownerless。 */
+    private static PlacedBlockTrackerData.CredentialSnapshot decodeCredential(
+            CompoundTag tag, String key) {
+        if (!tag.contains(key)) return null;
+        if (!tag.contains(key, Tag.TAG_COMPOUND)) {
+            throw new IllegalArgumentException("placement history " + key + " 类型无效");
+        }
+        return PlacedBlockTrackerData.decodeSnapshot(tag.getCompound(key));
     }
 
     /**

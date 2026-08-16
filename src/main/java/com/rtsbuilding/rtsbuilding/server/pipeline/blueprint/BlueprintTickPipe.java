@@ -223,7 +223,7 @@ public final class BlueprintTickPipe {
         BlockPlacer.finishBlueprintPlacement(
                 level, plan.target(), plan.state(),
                 extracted.isEmpty() ? ItemStack.EMPTY : extracted.getFirst());
-        BlockPlacer.trackPlaced(level, plan.target());
+        BlockPlacer.trackPlaced(level, plan.target(), player);
         for (Item item : plan.items()) {
             ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
             if (id != null) service.noteBlockPlaced(player, plan.target(), id.toString());

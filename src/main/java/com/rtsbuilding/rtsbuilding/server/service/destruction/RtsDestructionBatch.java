@@ -7,6 +7,7 @@ import com.rtsbuilding.rtsbuilding.server.diagnostic.RtsDiagnosticReason;
 import com.rtsbuilding.rtsbuilding.server.diagnostic.RtsOperationDiagnostics;
 import com.rtsbuilding.rtsbuilding.server.history.HistoryBlockRecord;
 import com.rtsbuilding.rtsbuilding.server.history.ServerHistoryManager;
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.progression.RtsFeature;
 import com.rtsbuilding.rtsbuilding.server.progression.RtsProgressionManager;
 import com.rtsbuilding.rtsbuilding.server.protection.RtsClaimProtectionService;
@@ -402,6 +403,12 @@ public final class RtsDestructionBatch {
         if (record.blockEntityData() != null) {
             tag.put("blockEntity", record.blockEntityData().copy());
         }
+        if (record.credentialBefore() != null) {
+            tag.put("credentialBefore", PlacedBlockTrackerData.encodeSnapshot(record.credentialBefore()));
+        }
+        if (record.credentialAfter() != null) {
+            tag.put("credentialAfter", PlacedBlockTrackerData.encodeSnapshot(record.credentialAfter()));
+        }
         return tag;
     }
 
@@ -411,7 +418,24 @@ public final class RtsDestructionBatch {
         if (state.isAir()) throw new IllegalArgumentException("detached destruction history 方块状态无效");
         CompoundTag blockEntity = tag.contains("blockEntity", net.minecraft.nbt.Tag.TAG_COMPOUND)
                 ? tag.getCompound("blockEntity").copy() : null;
-        return new HistoryBlockRecord(BlockPos.of(tag.getLong("pos")), state, blockEntity);
+        PlacedBlockTrackerData.CredentialSnapshot credentialBefore = decodeCredential(
+                tag, "credentialBefore");
+        PlacedBlockTrackerData.CredentialSnapshot credentialAfter = decodeCredential(
+                tag, "credentialAfter");
+        return new HistoryBlockRecord(
+                BlockPos.of(tag.getLong("pos")), state, blockEntity,
+                net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), null,
+                credentialBefore, credentialAfter);
+    }
+
+    /** 旧破坏历史可缺字段，但错误类型不能静默清空 owner。 */
+    private static PlacedBlockTrackerData.CredentialSnapshot decodeCredential(
+            CompoundTag tag, String key) {
+        if (!tag.contains(key)) return null;
+        if (!tag.contains(key, net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            throw new IllegalArgumentException("detached destruction history " + key + " 类型无效");
+        }
+        return PlacedBlockTrackerData.decodeSnapshot(tag.getCompound(key));
     }
 
     // =========================================================================

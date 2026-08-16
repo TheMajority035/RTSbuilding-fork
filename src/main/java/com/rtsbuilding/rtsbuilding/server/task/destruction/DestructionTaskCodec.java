@@ -1,5 +1,6 @@
 package com.rtsbuilding.rtsbuilding.server.task.destruction;
 
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.task.DestructionTaskPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -89,6 +90,8 @@ public final class DestructionTaskCodec {
             if (record.contains("blockEntity") && !record.contains("blockEntity", Tag.TAG_COMPOUND)) {
                 throw new IllegalArgumentException("destruction history blockEntity 类型无效");
             }
+            validateCredential(record, "credentialBefore");
+            validateCredential(record, "credentialAfter");
             history.add(record.copy());
         }
 
@@ -121,5 +124,13 @@ public final class DestructionTaskCodec {
         if (!tag.contains(key, type)) {
             throw new IllegalArgumentException("destruction payload 字段类型无效: " + key);
         }
+    }
+
+    private static void validateCredential(CompoundTag record, String key) {
+        if (!record.contains(key)) return;
+        if (!record.contains(key, Tag.TAG_COMPOUND)) {
+            throw new IllegalArgumentException("destruction history " + key + " 类型无效");
+        }
+        PlacedBlockTrackerData.decodeSnapshot(record.getCompound(key));
     }
 }

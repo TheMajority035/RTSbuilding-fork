@@ -16,6 +16,7 @@ import com.rtsbuilding.rtsbuilding.server.api.impl.RtsAPIImpl;
 import com.rtsbuilding.rtsbuilding.server.camera.RtsCameraManager;
 import com.rtsbuilding.rtsbuilding.server.data.DataCluster;
 import com.rtsbuilding.rtsbuilding.server.data.PlayerComponents;
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.data.RtsAtomicNbtStore;
 import com.rtsbuilding.rtsbuilding.server.network.RtsClientboundPackets;
 import com.rtsbuilding.rtsbuilding.server.history.HistoryBlockRecord;
@@ -1614,8 +1615,12 @@ public final class RtsServerGameTests {
         setChestStack(helper, chestRel, 0, new ItemStack(Items.DIAMOND, 7));
         ServerPlayer player = startRtsPlayer(helper, GameType.CREATIVE);
         BlockPos chest = helper.absolutePos(chestRel);
+        PlacedBlockTrackerData tracker = PlacedBlockTrackerData.get(helper.getLevel());
+        tracker.markPlaced(chest, player.getUUID(), helper.getLevel().getBlockState(chest));
+        PlacedBlockTrackerData.CredentialSnapshot originalCredential = tracker.captureSnapshot(chest);
         HistoryBlockRecord before = ServerHistoryManager.captureBlock(helper.getLevel(), chest, true);
         helper.setBlock(chestRel, Blocks.AIR);
+        tracker.clear(chest);
 
         ServerHistoryManager.recordBreakWithRecords(
                 player, List.of(before), Direction.DOWN, 0, true);
@@ -1624,9 +1629,14 @@ public final class RtsServerGameTests {
         helper.assertBlockPresent(Blocks.CHEST, chestRel);
         helper.assertValueEqual(7, countChestItem(helper, chestRel, Items.DIAMOND),
                 "Creative break undo must restore the complete chest NBT");
+        helper.assertTrue(originalCredential != null
+                        && originalCredential.equals(tracker.captureSnapshot(chest)),
+                "Creative break undo must restore the broken block's original owner credential");
         helper.assertValueEqual(1, ServerHistoryManager.executeRedo(player),
                 "Creative break redo should remove the restored block again");
         helper.assertBlockPresent(Blocks.AIR, chestRel);
+        helper.assertTrue(tracker.captureSnapshot(chest) == null,
+                "Creative break redo must clear the credential only after removing the block");
         stopPlayers(player);
         helper.succeed();
     }
@@ -1638,12 +1648,17 @@ public final class RtsServerGameTests {
         setChestStack(helper, chestRel, 0, new ItemStack(Items.EMERALD, 5));
         ServerPlayer player = startRtsPlayer(helper, GameType.CREATIVE);
         BlockPos chest = helper.absolutePos(chestRel);
+        PlacedBlockTrackerData tracker = PlacedBlockTrackerData.get(helper.getLevel());
+        tracker.markPlaced(chest, player.getUUID(), helper.getLevel().getBlockState(chest));
         HistoryBlockRecord before = ServerHistoryManager.capturePlacementBefore(
                 helper.getLevel(), chest, true);
         helper.setBlock(chestRel, Blocks.STONE);
+        tracker.markPlaced(chest, player.getUUID(), helper.getLevel().getBlockState(chest));
+        PlacedBlockTrackerData.CredentialSnapshot afterCredential = tracker.captureSnapshot(chest);
         HistoryBlockRecord placement = HistoryBlockRecord.placement(
                 chest, before.state(), before.blockEntityData(),
-                helper.getLevel().getBlockState(chest));
+                helper.getLevel().getBlockState(chest), null,
+                before.credentialBefore(), afterCredential);
 
         ServerHistoryManager.recordPlacementWithRecords(
                 player, List.of(placement), Direction.UP, true);
@@ -1652,9 +1667,15 @@ public final class RtsServerGameTests {
         helper.assertBlockPresent(Blocks.CHEST, chestRel);
         helper.assertValueEqual(5, countChestItem(helper, chestRel, Items.EMERALD),
                 "Creative placement undo must restore overwritten block-entity NBT");
+        helper.assertTrue(before.credentialBefore() != null
+                        && before.credentialBefore().equals(tracker.captureSnapshot(chest)),
+                "Creative placement undo must restore the overwritten block's original owner credential");
         helper.assertValueEqual(1, ServerHistoryManager.executeRedo(player),
                 "Creative placement redo should restore the placed stone");
         helper.assertBlockPresent(Blocks.STONE, chestRel);
+        helper.assertTrue(afterCredential != null
+                        && afterCredential.equals(tracker.captureSnapshot(chest)),
+                "Creative placement redo must restore the placed block's owner credential");
         stopPlayers(player);
         helper.succeed();
     }
@@ -1811,11 +1832,22 @@ public final class RtsServerGameTests {
         helper.setBlock(firstRel, Blocks.STONE);
         helper.setBlock(secondRel, Blocks.STONE);
         ServerPlayer player = startRtsPlayer(helper, GameType.CREATIVE);
+        PlacedBlockTrackerData tracker = PlacedBlockTrackerData.get(helper.getLevel());
+        tracker.markPlaced(helper.absolutePos(firstRel), player.getUUID(),
+                helper.getLevel().getBlockState(helper.absolutePos(firstRel)));
+        tracker.markPlaced(helper.absolutePos(secondRel), player.getUUID(),
+                helper.getLevel().getBlockState(helper.absolutePos(secondRel)));
+        PlacedBlockTrackerData.CredentialSnapshot firstAfter =
+                tracker.captureSnapshot(helper.absolutePos(firstRel));
+        PlacedBlockTrackerData.CredentialSnapshot secondAfter =
+                tracker.captureSnapshot(helper.absolutePos(secondRel));
         List<HistoryBlockRecord> records = List.of(
                 HistoryBlockRecord.placement(helper.absolutePos(firstRel),
-                        Blocks.AIR.defaultBlockState(), null, Blocks.STONE.defaultBlockState()),
+                        Blocks.AIR.defaultBlockState(), null, Blocks.STONE.defaultBlockState(), null,
+                        null, firstAfter),
                 HistoryBlockRecord.placement(helper.absolutePos(secondRel),
-                        Blocks.AIR.defaultBlockState(), null, Blocks.STONE.defaultBlockState()));
+                        Blocks.AIR.defaultBlockState(), null, Blocks.STONE.defaultBlockState(), null,
+                        null, secondAfter));
         ServerHistoryManager.recordPlacementWithRecords(player, records, Direction.UP, true);
         helper.assertValueEqual(2, ServerHistoryManager.executeUndo(player),
                 "Fixture should undo both creative placements");
@@ -1825,6 +1857,11 @@ public final class RtsServerGameTests {
                 "Redo should skip the position changed after undo");
         helper.assertBlockPresent(Blocks.STONE, firstRel);
         helper.assertBlockPresent(Blocks.DIRT, secondRel);
+        helper.assertTrue(firstAfter != null
+                        && firstAfter.equals(tracker.captureSnapshot(helper.absolutePos(firstRel))),
+                "Successful redo must restore the first position's credential");
+        helper.assertTrue(tracker.captureSnapshot(helper.absolutePos(secondRel)) == null,
+                "Skipped redo must not mutate the changed second position's credential");
         helper.assertValueEqual(1, ServerHistoryManager.getRedoSize(player.getUUID()),
                 "The failed redo subset must remain redoable");
         helper.assertValueEqual(1, ServerHistoryManager.executeUndo(player),

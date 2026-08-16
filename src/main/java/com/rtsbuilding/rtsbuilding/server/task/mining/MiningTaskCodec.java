@@ -1,6 +1,7 @@
 package com.rtsbuilding.rtsbuilding.server.task.mining;
 
 import com.rtsbuilding.rtsbuilding.server.history.HistoryBlockRecord;
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.task.MiningTaskPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -96,6 +97,12 @@ public final class MiningTaskCodec {
         tag.putLong("pos", record.pos().asLong());
         tag.put("state", NbtUtils.writeBlockState(record.state()));
         if (record.blockEntityData() != null) tag.put("block_entity", record.blockEntityData().copy());
+        if (record.credentialBefore() != null) {
+            tag.put("credential_before", PlacedBlockTrackerData.encodeSnapshot(record.credentialBefore()));
+        }
+        if (record.credentialAfter() != null) {
+            tag.put("credential_after", PlacedBlockTrackerData.encodeSnapshot(record.credentialAfter()));
+        }
         return tag;
     }
 
@@ -109,7 +116,24 @@ public final class MiningTaskCodec {
         if (state.isAir()) throw new IllegalArgumentException("mining history 不能记录空气");
         CompoundTag blockEntity = tag.contains("block_entity", Tag.TAG_COMPOUND)
                 ? tag.getCompound("block_entity").copy() : null;
-        return new HistoryBlockRecord(BlockPos.of(tag.getLong("pos")), state, blockEntity);
+        PlacedBlockTrackerData.CredentialSnapshot credentialBefore = decodeCredential(
+                tag, "credential_before");
+        PlacedBlockTrackerData.CredentialSnapshot credentialAfter = decodeCredential(
+                tag, "credential_after");
+        return new HistoryBlockRecord(
+                BlockPos.of(tag.getLong("pos")), state, blockEntity,
+                net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), null,
+                credentialBefore, credentialAfter);
+    }
+
+    /** 可选字段缺失兼容旧任务，但字段类型错误必须拒绝，不能静默丢失 owner。 */
+    private static PlacedBlockTrackerData.CredentialSnapshot decodeCredential(
+            CompoundTag tag, String key) {
+        if (!tag.contains(key)) return null;
+        if (!tag.contains(key, Tag.TAG_COMPOUND)) {
+            throw new IllegalArgumentException("mining history " + key + " 类型无效");
+        }
+        return PlacedBlockTrackerData.decodeSnapshot(tag.getCompound(key));
     }
 
     private static void requireFields(CompoundTag tag) {

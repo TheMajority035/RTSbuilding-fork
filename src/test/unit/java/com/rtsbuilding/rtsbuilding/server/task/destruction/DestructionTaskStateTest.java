@@ -1,5 +1,6 @@
 package com.rtsbuilding.rtsbuilding.server.task.destruction;
 
+import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.task.DestructionTaskPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -36,6 +37,9 @@ class DestructionTaskStateTest {
         assertEquals(state, decoded.state());
         assertTrue(decoded.state().complete());
         assertTrue(decoded.state().creativeOperation());
+        assertEquals(PlacedBlockTrackerData.CredentialKind.V2,
+                PlacedBlockTrackerData.decodeSnapshot(
+                        decoded.state().historyRecords().getFirst().getCompound("credentialAfter")).kind());
     }
 
     @Test
@@ -92,6 +96,21 @@ class DestructionTaskStateTest {
                 () -> DestructionTaskCodec.decode(wrongDimension));
     }
 
+    @Test
+    void legacyHistoryWithoutCredentialFieldsStillDecodes() {
+        DestructionTaskPayload payload = new DestructionTaskPayload(
+                UUID.randomUUID(), Level.OVERWORLD, 17, stateWithOneDestroyedTarget(false));
+        CompoundTag encoded = DestructionTaskCodec.encode(payload);
+        CompoundTag history = encoded.getList("history", net.minecraft.nbt.Tag.TAG_COMPOUND).getCompound(0);
+        history.remove("credentialBefore");
+        history.remove("credentialAfter");
+
+        DestructionTaskPayload decoded = DestructionTaskCodec.decode(encoded);
+
+        assertFalse(decoded.state().historyRecords().getFirst().contains("credentialBefore"));
+        assertFalse(decoded.state().historyRecords().getFirst().contains("credentialAfter"));
+    }
+
     private static DestructionTaskState stateWithOneDestroyedTarget(boolean creativeOperation) {
         BlockPos target = new BlockPos(1, 2, 3);
         return new DestructionTaskState(
@@ -105,6 +124,13 @@ class DestructionTaskStateTest {
         CompoundTag state = new CompoundTag();
         state.putString("Name", "minecraft:stone");
         tag.put("state", state);
+        tag.put("credentialBefore", PlacedBlockTrackerData.encodeSnapshot(
+                PlacedBlockTrackerData.CredentialSnapshot.legacy(null, 5L)));
+        tag.put("credentialAfter", PlacedBlockTrackerData.encodeSnapshot(
+                new PlacedBlockTrackerData.CredentialSnapshot(
+                        UUID.fromString("00000000-0000-0000-0000-000000000003"),
+                        net.minecraft.resources.ResourceLocation.parse("minecraft:stone"), 6L,
+                        PlacedBlockTrackerData.CredentialKind.V2)));
         return tag;
     }
 }

@@ -29,7 +29,7 @@ class RtsDiagnosticReasonTest {
     void distinguishesIntentionalSkipFromFailureAndException() {
         assertEquals(RtsDiagnosticReason.PLACED_BLOCK_RECOVERED,
                 RtsDiagnosticReason.classify(
-                        "MiningExecutePipe", "Placed block recovered, no mining needed", true, false));
+                        "TrackedPlacedRecoveryPipe", "Tracked placed block recovered immediately", true, false));
         assertEquals(RtsDiagnosticReason.PIPELINE_EARLY_EXIT,
                 RtsDiagnosticReason.classify("AnyPipe", "Already handled", true, false));
         assertEquals(RtsDiagnosticReason.PIPE_EXCEPTION,

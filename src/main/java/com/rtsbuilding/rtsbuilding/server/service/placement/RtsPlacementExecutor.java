@@ -431,7 +431,8 @@ public final class RtsPlacementExecutor {
         if (placedPos != null) {
             RtsPlacementHelper.rotatePlacedBlock(level, placedPos, rotateSteps);
             RtsPlacementHelper.applyPlacementStatePreset(level, placedPos, statePreset);
-            PlacedBlockTrackerData.get(level).mark(placedPos);
+            PlacedBlockTrackerData.get(level).markPlaced(
+                    placedPos, player.getUUID(), level.getBlockState(placedPos));
             if (selectedPlacesBlock) {
                 RtsPlacementSound.playRemotePlacedBlockAnimation(player, placedPos);
                 RtsPlacementSound.playRemotePlacedBlockSound(player, level, placedPos);
@@ -467,7 +468,8 @@ public final class RtsPlacementExecutor {
             ItemStack sourceSnapshot, boolean sourcePlacesBlock) {
         BlockPos placedPos = RtsPlacementHelper.detectPlacedPos(level, clickedPos, beforeClicked, adjacentPos, beforeAdjacent);
         if (placedPos != null) {
-            PlacedBlockTrackerData.get(level).mark(placedPos);
+            PlacedBlockTrackerData.get(level).markPlaced(
+                    placedPos, player.getUUID(), level.getBlockState(placedPos));
             if (sourcePlacesBlock) {
                 RtsPlacementSound.playRemotePlacedBlockAnimation(player, placedPos);
                 RtsPlacementSound.playRemotePlacedBlockSound(player, level, placedPos);

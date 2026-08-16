@@ -11,22 +11,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RtsPlacedRecoveryBypassContractTest {
     @Test
     void trackedRecoveryBypassesHarvestChecksWithoutWeakeningCleanClaims() throws Exception {
-        String source = Files.readString(Path.of(
+        String recovery = Files.readString(Path.of(
                 "src/main/java/com/rtsbuilding/rtsbuilding/server/service/RtsPlacedRecoveryService.java"));
+        String capture = Files.readString(Path.of(
+                "src/main/java/com/rtsbuilding/rtsbuilding/server/service/mining/RtsMiningDropCapture.java"));
 
-        assertTrue(source.contains("getCloneItemStack(level, pos, state)"));
-        assertTrue(source.contains("CommonHooks.fireBlockBreak("));
-        assertTrue(source.contains("level.destroyBlock(pos, false, player)"));
-        assertTrue(source.contains("if (recoveredBlock.isEmpty())"));
-        assertTrue(source.contains("tracker.mark(targetPos);"));
-        assertTrue(source.contains("materializeRecoveredBlock(level, targetPos, recoveredBlock)"));
-        assertTrue(source.contains("new PlacedRecoveryClaim("));
-        assertTrue(source.contains("requiredPersistedRevision() <= persistedPlacementRevision"));
-        assertTrue(source.contains("claim.matches(droppedStack)"));
-        assertFalse(source.contains("Items.NETHERITE_PICKAXE"));
-        assertFalse(source.contains("SILK_TOUCH"));
-        assertFalse(source.contains("player.gameMode.destroyBlock(pos)"));
-        assertFalse(source.contains("stacks.addLast(recoveredBlock.copy())"));
+        assertTrue(recovery.contains("player.gameMode.destroyBlock(targetPos)"));
+        assertTrue(recovery.contains("TemporaryContextSwitcher.withTemporaryMainHandItem"));
+        assertTrue(recovery.contains("Items.NETHERITE_PICKAXE"));
+        assertTrue(recovery.contains("Enchantments.SILK_TOUCH"));
+        assertTrue(recovery.contains("RtsMiningDropCapture.captureInstantRecovery"));
+        assertTrue(recovery.contains("enum InstantRecoveryResult"));
+        assertTrue(recovery.contains("NOT_TRACKED"));
+        assertTrue(recovery.contains("REJECTED"));
+        assertTrue(recovery.contains("FAILED"));
+        assertTrue(recovery.contains("tracker.restoreSnapshot(targetPos, originalCredential);"));
+        assertFalse(recovery.contains("tracker.mark("));
+        assertTrue(recovery.contains("tracker.clear(targetPos);"));
+        assertFalse(recovery.contains("getCloneItemStack"));
+        assertFalse(recovery.contains("materializeRecoveredBlock"));
+        assertFalse(recovery.contains("snapshotNearbyDrops"));
+        assertFalse(recovery.contains("collectNewNearbyDrops"));
+        assertFalse(recovery.contains("new PlacedRecoveryJob("));
+
+        assertTrue(capture.contains("PlayerEvent.HarvestCheck"));
+        assertTrue(capture.contains("event.setCanHarvest(true)"));
+        assertTrue(capture.contains("context.targetPos.equals(event.getPos())"));
+        assertTrue(capture.contains("event.getEntity() != context.player"));
+        assertFalse(capture.contains("AABB"));
 
         String trackingSource = Files.readString(Path.of(
                 "src/main/java/com/rtsbuilding/rtsbuilding/server/tracking/RtsBlockTrackingEvents.java"));

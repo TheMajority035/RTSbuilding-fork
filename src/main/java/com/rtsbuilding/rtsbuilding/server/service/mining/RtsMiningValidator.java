@@ -2,13 +2,11 @@ package com.rtsbuilding.rtsbuilding.server.service.mining;
 
 import com.rtsbuilding.rtsbuilding.Config;
 import com.rtsbuilding.rtsbuilding.common.RtsUltimineCollector;
-import com.rtsbuilding.rtsbuilding.server.data.PlacedBlockTrackerData;
 import com.rtsbuilding.rtsbuilding.server.loadout.RtsMiningRules;
 import com.rtsbuilding.rtsbuilding.server.progression.RtsFeature;
 import com.rtsbuilding.rtsbuilding.server.progression.RtsProgressionManager;
 import com.rtsbuilding.rtsbuilding.server.protection.RtsClaimProtectionService;
 import com.rtsbuilding.rtsbuilding.server.plugin.RtsPluginService;
-import com.rtsbuilding.rtsbuilding.server.service.RtsPlacedRecoveryService;
 import com.rtsbuilding.rtsbuilding.server.storage.resolver.RtsLinkedStorageResolver;
 import com.rtsbuilding.rtsbuilding.server.storage.session.RtsStorageSession;
 import net.minecraft.core.BlockPos;
@@ -38,7 +36,6 @@ import net.minecraft.world.level.block.state.BlockState;
  *   <li>{@link #isUltimineCandidate} — 连锁挖掘候选检查（类型匹配、速度比、工具可达性）</li>
  *   <li>{@link #isToolNearBreak} — 检测工具是否即将损坏（≤5% 耐久）</li>
  *   <li>{@link #collectUltimineTargets} — 委托 {@link com.rtsbuilding.rtsbuilding.common.RtsUltimineCollector} 收集连通方块</li>
- *   <li>{@link #tryRecoverPlacedBlock} — 尝试恢复 RTS 已放置的方块</li>
  * </ul>
  */
 public final class RtsMiningValidator {
@@ -454,22 +451,4 @@ public final class RtsMiningValidator {
         return new java.util.ArrayDeque<>(targets);
     }
 
-    // =========================================================================
-    //  已放置方块恢复
-    // =========================================================================
-
-    /**
-     * 尝试恢复给定位置的 RTS 已放置方块。如果该方块由 RTS 放置且破坏后消失，
-     * 返回 {@code true} 指示挖掘应停止（恢复成功）。
-     */
-    public static boolean tryRecoverPlacedBlock(ServerPlayer player, RtsStorageSession session, BlockPos pos, Direction face) {
-        if (PlacedBlockTrackerData.get(player.serverLevel()).isPlaced(pos)
-                && RtsLinkedStorageResolver.hasAnyStorage(player, session)) {
-            BlockState before = player.serverLevel().getBlockState(pos);
-            RtsPlacedRecoveryService.breakPlaced(player, pos, face, false);
-            BlockState after = player.serverLevel().getBlockState(pos);
-            return !before.equals(after);
-        }
-        return false;
-    }
 }
