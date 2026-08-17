@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
-public final class RtsModConfigScreen extends Screen {
+public final class RtsModServerConfigScreen extends Screen {
     private static final int CONTENT_MAX_W = 720;
     private static final int HEADER_H = 40;
     private static final int FOOTER_H = 40;
@@ -45,7 +45,7 @@ public final class RtsModConfigScreen extends Screen {
     private EditBox areaDestroyMaxTargetsBox;
     private int scroll;
 
-    public RtsModConfigScreen(Screen parent) {
+    public RtsModServerConfigScreen(Screen parent) {
         super(Component.translatable("config.rtsbuilding.title"));
         this.parent = parent;
     }
@@ -259,21 +259,23 @@ public final class RtsModConfigScreen extends Screen {
     private void saveAndClose() {
         captureVisibleDrafts();
         try {
-            Config.saveGeneralSettings(
-                    this.survivalEnabled,
-                    this.shareWithTeams,
-                    parseMaxRadius(),
-                    this.blueprintsEnabled,
-                    parseMaxBlueprintBlocks());
-            Config.saveAreaMineLimitSettings(
-                    parseAreaMineMaxWidth(),
-                    parseAreaMineMaxHeight(),
-                    parseAreaMineMaxDepth(),
-                    parseAreaMineMaxVolume(),
-                    parseAreaDestroyMaxTargets(),
-                    this.areaMineMaxHarvestTier);
-            Config.setInventoryRtsButtonEnabled(this.inventoryRtsButtonEnabled);
-            Config.setDeveloperModeEnabled(this.developerMode);
+            Config.saveClientSettings(
+                this.inventoryRtsButtonEnabled,
+                this.developerMode
+            );
+            Config.saveServerSettings(
+                this.survivalEnabled,
+                this.shareWithTeams,
+                parseMaxRadius(),
+                this.blueprintsEnabled,
+                parseMaxBlueprintBlocks(),
+                parseAreaMineMaxWidth(),
+                parseAreaMineMaxHeight(),
+                parseAreaMineMaxDepth(),
+                parseAreaMineMaxVolume(),
+                parseAreaDestroyMaxTargets(),
+                this.areaMineMaxHarvestTier
+            );
         } catch (RuntimeException ex) {
             if (this.minecraft != null && this.minecraft.player != null) {
                 this.minecraft.player.displayClientMessage(Component.literal("RTSBuilding config save failed: " + ex.getClass().getSimpleName()), false);
