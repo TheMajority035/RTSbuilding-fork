@@ -1036,6 +1036,7 @@
   "config.rtsbuilding.area_mine_max_harvest_tier": "最高採集等級",
   "config.rtsbuilding.area_mine_max_harvest_tier.hint": "生存平衡開啟時，限制採掘等級插件能夠達到的伺服器總上限；實際工具仍必須能正確採集",
   "config.rtsbuilding.harvest_tier.wood": "木",
+  "config.rtsbuilding.harvest_tier.stone": "石",
   "config.rtsbuilding.harvest_tier.iron": "鐵",
   "config.rtsbuilding.harvest_tier.diamond": "鑽石",
   "config.rtsbuilding.harvest_tier.unlimited": "無限制"
