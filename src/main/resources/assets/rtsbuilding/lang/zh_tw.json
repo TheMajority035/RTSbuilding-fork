@@ -70,6 +70,7 @@
   "key.rtsbuilding.selection_nudge_up": "選擇框：向上微調",
   "key.rtsbuilding.selection_nudge_down": "選擇框：向下微調",
   "gui.rtsbuilding.back": "返回",
+  "gui.rtsbuilding.cancel": "取消",
   "gui.rtsbuilding.prev": "上頁",
   "gui.rtsbuilding.next": "下頁",
   "gui.rtsbuilding.on": "開",
