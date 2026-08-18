@@ -485,8 +485,6 @@
   "message.rtsbuilding.developer.run_mismatch": "开发者指标 Run ID 不匹配；当前服务端样本未被清除。",
   "rtsbuilding.configuration.ultimineMaxBlocks": "连锁挖掘最大方块数",
   "rtsbuilding.configuration.ultimineMaxBlocks.tooltip": "一次 RTS 连锁挖掘请求最多收集的方块数。",
-  "rtsbuilding.configuration.areaMineMaxSize": "范围挖掘最大尺寸",
-  "rtsbuilding.configuration.areaMineMaxSize.tooltip": "RTS 范围挖掘每个维度允许的最大方块数。",
   "rtsbuilding.configuration.areaMineMaxVolume": "范围挖掘最大体积",
   "rtsbuilding.configuration.areaMineMaxVolume.tooltip": "一次 RTS 范围挖掘允许覆盖的最大体积，即宽 x 高 x 深。",
   "rtsbuilding.configuration.areaMineMaxWidth": "范围挖掘最大宽度",

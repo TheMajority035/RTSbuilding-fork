@@ -469,8 +469,6 @@
   "message.rtsbuilding.developer.run_mismatch": "開發者指標 Run ID 不相符；目前服務端樣本未被清除。",
   "rtsbuilding.configuration.ultimineMaxBlocks": "連鎖挖掘最大方塊數",
   "rtsbuilding.configuration.ultimineMaxBlocks.tooltip": "一次 RTS 連鎖挖掘請求最多收集的方塊數。",
-  "rtsbuilding.configuration.areaMineMaxSize": "範圍挖掘最大尺寸",
-  "rtsbuilding.configuration.areaMineMaxSize.tooltip": "RTS 範圍挖掘每個維度允許的最大方塊數。",
   "rtsbuilding.configuration.areaMineMaxVolume": "範圍挖掘最大體積",
   "rtsbuilding.configuration.areaMineMaxVolume.tooltip": "一次 RTS 範圍挖掘允許覆蓋的最大體積，也就是寬 x 高 x 深。",
   "rtsbuilding.configuration.areaMineMaxWidth": "範圍挖掘最大寬度",

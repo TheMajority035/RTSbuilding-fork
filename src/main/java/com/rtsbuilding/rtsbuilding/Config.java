@@ -109,11 +109,6 @@ public class Config {
             .translation("rtsbuilding.configuration.ultimineMaxBlocks")
             .defineInRange("mining.ultimineMaxBlocks", 256, 1, 4096);
 
-    public static final ModConfigSpec.IntValue AREA_MINE_MAX_SIZE = SERVER_BUILDER
-            .comment("Maximum block count per dimension for RTS area mining selections.")
-            .translation("rtsbuilding.configuration.areaMineMaxSize")
-            .defineInRange("mining.areaMineMaxSize", 36, 1, 64);
-
     public static final ModConfigSpec.IntValue AREA_MINE_MAX_VOLUME = SERVER_BUILDER
             .comment("Maximum covered volume, width * height * depth, accepted by one RTS area mining selection.")
             .translation("rtsbuilding.configuration.areaMineMaxVolume")
@@ -282,10 +277,9 @@ public class Config {
         AREA_MINE_MAX_WIDTH.set(maxWidth);
         AREA_MINE_MAX_HEIGHT.set(maxHeight);
         AREA_MINE_MAX_DEPTH.set(maxDepth);
-        AREA_MINE_MAX_VOLUME.set(maxVolume);
+        AREA_MINE_MAX_VOLUME.set(Math.min(maxVolume, maxWidth * maxHeight * maxDepth));
         AREA_DESTROY_MAX_TARGETS.set(maxTargets);
         AREA_MINE_MAX_HARVEST_TIER.set(maxHarvestTier);
-        AREA_MINE_MAX_SIZE.set(maxWidth * maxHeight * maxDepth);
         SERVER_SPEC.save();
     }
 
@@ -381,10 +375,6 @@ public class Config {
 
     public static int ultimineMaxBlocks() {
         return ULTIMINE_MAX_BLOCKS.getAsInt();
-    }
-
-    public static int areaMineMaxSize() {
-        return AREA_MINE_MAX_SIZE.getAsInt();
     }
 
     public static int areaMineMaxVolume() {

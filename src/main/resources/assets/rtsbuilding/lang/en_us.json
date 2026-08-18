@@ -485,8 +485,6 @@
   "message.rtsbuilding.developer.run_mismatch": "Developer metrics run mismatch; the active server sample was kept unchanged.",
   "rtsbuilding.configuration.ultimineMaxBlocks": "Chain mining max blocks",
   "rtsbuilding.configuration.ultimineMaxBlocks.tooltip": "Maximum blocks collected by one RTS chain mining request.",
-  "rtsbuilding.configuration.areaMineMaxSize": "Area mining max size",
-  "rtsbuilding.configuration.areaMineMaxSize.tooltip": "Maximum block count per dimension for RTS area mining selections.",
   "rtsbuilding.configuration.areaMineMaxVolume": "Area mining max volume",
   "rtsbuilding.configuration.areaMineMaxVolume.tooltip": "Maximum covered volume, width x height x depth, accepted by one RTS area mining selection.",
   "rtsbuilding.configuration.areaMineMaxWidth": "Area mining max width",
